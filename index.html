@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-8">https://github.com/maker-xiao-chuizi/cpp-algo-viz/blob/main/index.html
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>C++ 算法可视化教学平台</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -196,37 +196,38 @@
         }
 
         .bar-rect {
-            border-radius: 6px 6px 0 0;
+            border-radius: 4px 4px 0 0;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
         .bar-value {
-            margin-top: 8px;
-            font-size: 13px;
+            margin-top: 6px;
+            font-size: 12px;
             font-weight: 600;
         }
 
         .bar-index {
-            font-size: 11px;
+            font-size: 10px;
             color: #666;
-            margin-top: 4px;
+            margin-top: 2px;
         }
 
         .bar-normal .bar-rect {
             background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+            opacity: 0.85;
         }
 
         .bar-comparing .bar-rect {
             background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
-            transform: scaleX(1.1);
-            box-shadow: 0 0 20px rgba(240, 147, 251, 0.5);
+            transform: scaleX(1.15);
+            box-shadow: 0 0 20px rgba(240, 147, 251, 0.6);
         }
 
         .bar-swapping .bar-rect {
             background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
-            transform: scaleX(1.15);
-            box-shadow: 0 0 25px rgba(79, 172, 254, 0.6);
+            transform: scaleX(1.2);
+            box-shadow: 0 0 25px rgba(79, 172, 254, 0.7);
         }
 
         .bar-sorted .bar-rect {
@@ -235,7 +236,7 @@
 
         .bar-pivot .bar-rect {
             background: linear-gradient(180deg, #fa709a 0%, #fee140 100%);
-            box-shadow: 0 0 20px rgba(250, 112, 154, 0.5);
+            box-shadow: 0 0 25px rgba(250, 112, 154, 0.6);
         }
 
         /* 变量面板 */
@@ -873,7 +874,7 @@
                         <div class="viz-title">📊 排序过程可视化</div>
                         <div class="bars-container">
                             <div v-for="(item, index) in array" :key="index" class="bar" :class="getBarClass(index)">
-                                <div class="bar-rect" :style="{ height: (item / 100 * 280) + 'px', width: Math.max(30, 600 / array.length - 6) + 'px' }"></div>
+                                <div class="bar-rect" :style="{ height: (item / 100 * 280) + 'px', width: Math.max(20, 500 / array.length - 8) + 'px' }"></div>
                                 <div class="bar-value">{{ item }}</div>
                                 <div class="bar-index">[{{ index }}]</div>
                             </div>
@@ -1530,39 +1531,138 @@
                             }
                         }
                     } else if (currentModule.value === 'insertion') {
+                        // 插入排序：从第二个元素开始，将每个元素插入到前面已排序部分的正确位置
                         for (let i = 1; i < n; i++) {
-                            let key = arr[i];
-                            sortingSteps.value.push({ type: 'pick_key', line: 2, i, j: i - 1, key, comparing: [], swapping: [], sorted: Array.from({length: i}, (_, k) => k), comparisons: stats.comparisons, swaps: stats.swaps });
+                            const key = arr[i];
+                            // 标记当前要插入的元素（用粉色高亮）
+                            sortingSteps.value.push({ 
+                                type: 'pick_key', 
+                                line: 2, 
+                                i, 
+                                j: i - 1, 
+                                key, 
+                                comparing: [i], 
+                                swapping: [], 
+                                sorted: Array.from({length: i}, (_, k) => k),
+                                comparisons: stats.comparisons, 
+                                swaps: stats.swaps 
+                            });
+                            
                             let j = i - 1;
+                            // 从后向前比较并移动元素
                             while (j >= 0 && arr[j] > key) {
-                                sortingSteps.value.push({ type: 'shift', line: 5, i, j, key, comparing: [j], swapping: [j + 1], sorted: Array.from({length: i}, (_, k) => k), comparisons: stats.comparisons + 1, swaps: stats.swaps });
+                                // 比较 arr[j] 和 key（粉色高亮比较的元素）
+                                sortingSteps.value.push({ 
+                                    type: 'compare', 
+                                    line: 4, 
+                                    i, 
+                                    j, 
+                                    key, 
+                                    comparing: [j], 
+                                    swapping: [j + 1],  // j+1位置会被覆盖
+                                    sorted: Array.from({length: i}, (_, k) => k),
+                                    comparisons: stats.comparisons + 1, 
+                                    swaps: stats.swaps 
+                                });
+                                // 实际移动元素（向右移动一位）
                                 arr[j + 1] = arr[j];
                                 j--;
                             }
+                            // 将key插入到正确位置
                             arr[j + 1] = key;
-                            sortingSteps.value.push({ type: 'insert', line: 8, i, j: j + 1, key, comparing: [], swapping: [], sorted: Array.from({length: i + 1}, (_, k) => k), comparisons: stats.comparisons, swaps: stats.swaps });
+                            // 高亮显示插入位置
+                            sortingSteps.value.push({ 
+                                type: 'insert', 
+                                line: 8, 
+                                i, 
+                                j: j + 1, 
+                                key, 
+                                comparing: [], 
+                                swapping: [j + 1], 
+                                sorted: Array.from({length: i + 1}, (_, k) => k),
+                                comparisons: stats.comparisons, 
+                                swaps: stats.swaps 
+                            });
                         }
                     } else if (currentModule.value === 'quick') {
-                        const partitionSteps = (low, high, depth = 0) => {
+                        // 快速排序：选择基准元素，分区递归
+                        const partitionSteps = (low, high) => {
                             if (low >= high) return;
+                            
                             const pivot = arr[high];
-                            sortingSteps.value.push({ type: 'choose_pivot', line: 7, pivot, low, high, comparing: [], swapping: [], sorted: [], comparisons: stats.comparisons, swaps: stats.swaps });
-                            let i = low - 1;
+                            // 高亮基准元素（黄色）
+                            sortingSteps.value.push({ 
+                                type: 'choose_pivot', 
+                                line: 7, 
+                                pivot, 
+                                low, 
+                                high, 
+                                comparing: [], 
+                                swapping: [high],  // 高亮基准位置
+                                sorted: [],
+                                comparisons: stats.comparisons, 
+                                swaps: stats.swaps 
+                            });
+                            
+                            let i = low - 1;  // i是小于基准区域的最后一个位置
+                            
+                            // 遍历 [low, high-1] 的元素
                             for (let j = low; j < high; j++) {
-                                sortingSteps.value.push({ type: 'compare', line: 10, i, j, pivot, comparing: [j, high], swapping: [], sorted: [], comparisons: stats.comparisons + 1, swaps: stats.swaps });
+                                // 比较当前元素和基准（粉色高亮比较的元素）
+                                sortingSteps.value.push({ 
+                                    type: 'compare', 
+                                    line: 10, 
+                                    i, 
+                                    j, 
+                                    pivot, 
+                                    comparing: [j, high],  // 当前元素和基准比较
+                                    swapping: [], 
+                                    sorted: [],
+                                    comparisons: stats.comparisons + 1, 
+                                    swaps: stats.swaps 
+                                });
+                                
                                 if (arr[j] < pivot) {
                                     i++;
                                     if (i !== j) {
-                                        sortingSteps.value.push({ type: 'swap', line: 11, i, j, pivot, comparing: [], swapping: [i, j], sorted: [], comparisons: stats.comparisons, swaps: stats.swaps + 1 });
+                                        // 交换 arr[i] 和 arr[j]（蓝色高亮）
+                                        sortingSteps.value.push({ 
+                                            type: 'swap', 
+                                            line: 11, 
+                                            i, 
+                                            j, 
+                                            pivot, 
+                                            comparing: [], 
+                                            swapping: [i, j], 
+                                            sorted: [],
+                                            comparisons: stats.comparisons, 
+                                            swaps: stats.swaps + 1 
+                                        });
                                         [arr[i], arr[j]] = [arr[j], arr[i]];
                                     }
                                 }
                             }
-                            sortingSteps.value.push({ type: 'place_pivot', line: 13, i, high, pivot, comparing: [], swapping: [i + 1, high], sorted: [], comparisons: stats.comparisons, swaps: stats.swaps + 1 });
+                            
+                            // 将基准放到正确位置（i+1）
+                            sortingSteps.value.push({ 
+                                type: 'place_pivot', 
+                                line: 13, 
+                                i: i + 1, 
+                                high, 
+                                pivot, 
+                                comparing: [], 
+                                swapping: [i + 1, high], 
+                                sorted: [],
+                                comparisons: stats.comparisons, 
+                                swaps: stats.swaps + 1 
+                            });
                             [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
-                            const pi = i + 1;
-                            partitionSteps(low, pi - 1, depth + 1);
-                            partitionSteps(pi + 1, high, depth + 1);
+                            
+                            const pi = i + 1;  // 基准的正确位置
+                            
+                            // 递归处理左右两部分
+                            partitionSteps(low, pi - 1);
+                            partitionSteps(pi + 1, high);
                         };
                         partitionSteps(0, n - 1);
                     } else if (currentModule.value === 'merge') {
