@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>C++ 算法可视化教学平台</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <script src="https://unpkg.com/gsap@3/dist/gsap.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', -apple-system, sans-serif;
+            background: #1a1a2e;
+            min-height: 100vh;
+            color: #fff;
+        }
+
+        #app {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 侧边导航 */
+        .sidebar {
+            width: 260px;
+            background: linear-gradient(180deg, #16213e 0%, #1a1a2e 100%);
+            border-right: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .logo {
+            padding: 24px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .logo h1 {
+            font-size: 20px;
+            color: #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo p {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .nav-section {
+            padding: 15px 0;
+        }
+
+        .nav-title {
+            font-size: 11px;
+            color: #666;
+            padding: 8px 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 3px solid transparent;
+            gap: 12px;
+        }
+
+        .nav-item:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .nav-item.active {
+            background: rgba(102, 126, 234, 0.2);
+            border-left-color: #667eea;
+            color: #667eea;
+        }
+
+        .nav-item .icon {
+            font-size: 18px;
+            width: 24px;
+            text-align: center;
+        }
+
+        /* 主内容区 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            background: rgba(255,255,255,0.03);
+            padding: 16px 24px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .current-module {
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 24px;
+            display: grid;
+            grid-template-columns: 280px 1fr 280px;
+            gap: 20px;
+        }
+
+        /* 控制面板 */
+        .panel {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+        }
+
+        .panel-title {
+            font-size: 14px;
+            color: #888;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn {
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        .speed-control {
+            margin: 20px 0;
+        }
+
+        .speed-label {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* 可视化区 */
+        .visualization {
+            background: rgba(255,255,255,0.03);
+            border-radius: 16px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .viz-title {
+            font-size: 16px;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .bars-container {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 6px;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            min-height: 350px;
+        }
+
+        .bar {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .bar-rect {
+            border-radius: 6px 6px 0 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .bar-value {
+            margin-top: 8px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .bar-index {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .bar-normal .bar-rect {
+            background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .bar-comparing .bar-rect {
+            background: linear-gradient(180deg, #f093fb 0%, #f5576c 100%);
+            transform: scaleX(1.1);
+            box-shadow: 0 0 20px rgba(240, 147, 251, 0.5);
+        }
+
+        .bar-swapping .bar-rect {
+            background: linear-gradient(180deg, #4facfe 0%, #00f2fe 100%);
+            transform: scaleX(1.15);
+            box-shadow: 0 0 25px rgba(79, 172, 254, 0.6);
+        }
+
+        .bar-sorted .bar-rect {
+            background: linear-gradient(180deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .bar-pivot .bar-rect {
+            background: linear-gradient(180deg, #fa709a 0%, #fee140 100%);
+            box-shadow: 0 0 20px rgba(250, 112, 154, 0.5);
+        }
+
+        /* 变量面板 */
+        .var-item {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+            transition: all 0.3s;
+        }
+
+        .var-item.highlight {
+            background: rgba(255, 215, 0, 0.15);
+            border: 1px solid rgba(255, 215, 0, 0.3);
+        }
+
+        .var-name {
+            font-size: 12px;
+            color: #888;
+            margin-bottom: 4px;
+        }
+
+        .var-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        .stat-item {
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        /* 代码区 */
+        .code-section {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .code-block {
+            background: #1e1e1e;
+            border-radius: 10px;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 13px;
+            line-height: 1.8;
+            overflow-x: auto;
+        }
+
+        .code-line {
+            padding: 2px 8px;
+            border-left: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .code-line.active {
+            background: rgba(255, 215, 0, 0.1);
+            border-left-color: #ffd700;
+        }
+
+        .code-line .ln {
+            color: #555;
+            margin-right: 16px;
+            user-select: none;
+        }
+
+        .keyword { color: #569cd6; }
+        .type { color: #4ec9b0; }
+        .func { color: #dcdcaa; }
+        .num { color: #b5cea8; }
+        .comment { color: #6a9955; }
+        .var { color: #9cdcfe; }
+        .op { color: #d4d4d4; }
+
+        /* 算法切换 */
+        .algorithm-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .algo-tab {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+            border: 1px solid transparent;
+        }
+
+        .algo-tab:hover {
+            background: rgba(102, 126, 234, 0.2);
+        }
+
+        .algo-tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+
+        /* 提示框 */
+        .tip-box {
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 3px solid #667eea;
+            padding: 12px 16px;
+            border-radius: 0 8px 8px 0;
+            font-size: 13px;
+            color: #a0a0a0;
+            margin-top: 16px;
+        }
+
+        .tip-box strong {
+            color: #667eea;
+        }
+
+        /* 数组输入 */
+        .array-input {
+            margin-bottom: 16px;
+        }
+
+        .array-input .el-input__inner {
+            background: rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff;
+        }
+
+        /* 递归树 */
+        .tree-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 300px;
+        }
+
+        .tree-node {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .tree-node.current {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 0 30px rgba(240, 147, 251, 0.5);
+            transform: scale(1.2);
+        }
+
+        .tree-node.computed {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+            position: relative;
+        }
+
+        .tree-branch {
+            position: relative;
+        }
+
+        .tree-branch::before {
+            content: '';
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            width: 2px;
+            height: 30px;
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* 栈帧动画 */
+        .stack-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 20px;
+        }
+
+        .stack-frame {
+            background: rgba(102, 126, 234, 0.2);
+            border: 2px solid rgba(102, 126, 234, 0.5);
+            border-radius: 10px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .stack-frame.active {
+            background: rgba(240, 147, 251, 0.2);
+            border-color: #f093fb;
+            transform: translateX(10px);
+        }
+
+        .stack-frame.returning {
+            background: rgba(67, 233, 123, 0.2);
+            border-color: #43e97b;
+            opacity: 0.6;
+        }
+
+        .stack-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        .stack-value {
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+        /* 链表可视化 */
+        .linked-list-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 30px;
+            flex-wrap: wrap;
+        }
+
+        .ll-node {
+            display: flex;
+            align-items: center;
+        }
+
+        .ll-node-box {
+            display: flex;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .ll-data {
+            padding: 12px 20px;
+            background: rgba(102, 126, 234, 0.2);
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .ll-pointer {
+            padding: 12px;
+            background: rgba(102, 126, 234, 0.1);
+            border-left: 2px solid #667eea;
+            color: #667eea;
+            font-size: 12px;
+        }
+
+        .ll-arrow {
+            font-size: 24px;
+            color: #667eea;
+            margin: 0 4px;
+        }
+
+        .ll-null {
+            padding: 12px 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .ll-node.current .ll-node-box {
+            border-color: #f093fb;
+            box-shadow: 0 0 20px rgba(240, 147, 251, 0.5);
+        }
+
+        .ll-node.current .ll-data {
+            background: rgba(240, 147, 251, 0.3);
+        }
+
+        /* 树可视化 */
+        .tree-viz-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            min-height: 350px;
+        }
+
+        .tree-viz-node {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .tree-viz-node.current {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: 0 0 20px rgba(240, 147, 251, 0.5);
+            transform: scale(1.2);
+        }
+
+        .tree-viz-node.visited {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        }
+
+        .tree-viz-row {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 40px;
+            position: relative;
+        }
+
+        .tree-viz-row::before {
+            content: '';
+            position: absolute;
+            top: -25px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        .tree-viz-branch {
+            position: relative;
+        }
+
+        .tree-viz-branch::before {
+            content: '';
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            width: 2px;
+            height: 25px;
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* 响应式 */
+        @media (max-width: 1200px) {
+            .content-area {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="sidebar">
+            <div class="logo">
+                <h1>🔨 C++ 可视化教学</h1>
+                <p>Algorithm Visualization Platform</p>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">排序算法</div>
+                <div class="nav-item" :class="{ active: currentModule === 'bubble' }" @click="switchModule('bubble')">
+                    <span class="icon">🫧</span>
+                    <span>冒泡排序</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentModule === 'selection' }" @click="switchModule('selection')">
+                    <span class="icon">👆</span>
+                    <span>选择排序</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentModule === 'insertion' }" @click="switchModule('insertion')">
+                    <span class="icon">📥</span>
+                    <span>插入排序</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentModule === 'quick' }" @click="switchModule('quick')">
+                    <span class="icon">⚡</span>
+                    <span>快速排序</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentModule === 'merge' }" @click="switchModule('merge')">
+                    <span class="icon">🔀</span>
+                    <span>归并排序</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">递归可视化</div>
+                <div class="nav-item" :class="{ active: currentModule === 'fibonacci' }" @click="switchModule('fibonacci')">
+                    <span class="icon">📈</span>
+                    <span>斐波那契数列</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentModule === 'hanoi' }" @click="switchModule('hanoi')">
+                    <span class="icon">🏛️</span>
+                    <span>汉诺塔</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">数据结构</div>
+                <div class="nav-item" :class="{ active: currentModule === 'stack' }" @click="switchModule('stack')">
+                    <span class="icon">📚</span>
+                    <span>栈</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentModule === 'queue' }" @click="switchModule('queue')">
+                    <span class="icon">🚶</span>
+                    <span>队列</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentModule === 'linkedlist' }" @click="switchModule('linkedlist')">
+                    <span class="icon">🔗</span>
+                    <span>链表</span>
+                </div>
+                <div class="nav-item" :class="{ active: currentModule === 'tree' }" @click="switchModule('tree')">
+                    <span class="icon">🌲</span>
+                    <span>二叉树</span>
+                </div>
+            </div>
+
+            <div class="nav-section">
+                <div class="nav-title">指针与内存</div>
+                <div class="nav-item" :class="{ active: currentModule === 'pointer' }" @click="switchModule('pointer')">
+                    <span class="icon">📍</span>
+                    <span>指针基础</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="header">
+                <div class="current-module">
+                    {{ moduleNames[currentModule] }}
+                </div>
+                <div class="header-actions">
+                    <el-button @click="showHelp = true" circle>❓</el-button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- 左侧控制面板 -->
+                <div class="panel">
+                    <div class="panel-title">🎮 控制面板</div>
+
+                    <!-- 排序算法控制 -->
+                    <template v-if="['bubble','selection','insertion','quick','merge'].includes(currentModule)">
+                        <el-button type="primary" class="control-btn" @click="startSort" :disabled="isSorting">
+                            ▶️ {{ isSorting ? '排序中...' : '播放' }}
+                        </el-button>
+                        <el-button class="control-btn" @click="pauseSort" :disabled="!isSorting">⏸️ 暂停</el-button>
+                        <el-button class="control-btn" @click="resetSort">🔄 重置</el-button>
+                        <el-button class="control-btn" @click="stepForward" :disabled="isSorting">⏭️ 单步</el-button>
+
+                        <div class="speed-control">
+                            <div class="speed-label">
+                                <span>动画速度</span>
+                                <span>{{ animationSpeed }}ms</span>
+                            </div>
+                            <el-slider v-model="animationSpeed" :min="100" :max="2000" :step="100" :show-tooltip="false"></el-slider>
+                        </div>
+
+                        <div class="speed-control">
+                            <div class="speed-label">
+                                <span>数组大小</span>
+                                <span>{{ arraySize }}</span>
+                            </div>
+                            <el-slider v-model="arraySize" :min="5" :max="12" :step="1" @change="generateArray"></el-slider>
+                        </div>
+
+                        <el-button type="success" class="control-btn" @click="generateArray">🎲 生成新数组</el-button>
+
+                        <div class="array-input" style="margin-top: 12px;">
+                            <el-input v-model="customArray" placeholder="手动输入数组，如: 5,3,8,1,9" size="small"></el-input>
+                            <el-button size="small" @click="applyCustomArray" style="margin-top: 8px; width: 100%;">应用自定义数组</el-button>
+                        </div>
+
+                        <div class="tip-box">
+                            <strong>{{ algorithmTips[currentModule] }}</strong>
+                        </div>
+                    </template>
+
+                    <!-- 递归控制 -->
+                    <template v-if="currentModule === 'fibonacci'">
+                        <div class="speed-control">
+                            <div class="speed-label"><span>计算 F(n)</span><span>n = {{ fibN }}</span></div>
+                            <el-slider v-model="fibN" :min="1" :max="10" :step="1"></el-slider>
+                        </div>
+                        <el-button type="primary" class="control-btn" @click="startFibonacci" :disabled="isSorting">▶️ 开始计算</el-button>
+                        <el-button class="control-btn" @click="resetFibonacci">🔄 重置</el-button>
+                        <el-button class="control-btn" @click="fibStep" :disabled="isSorting">⏭️ 单步</el-button>
+
+                        <div class="var-item" style="margin-top: 16px;">
+                            <div class="var-name">当前计算结果</div>
+                            <div class="var-value">{{ fibResult }}</div>
+                        </div>
+
+                        <div class="tip-box">
+                            <strong>斐波那契：</strong>每个数是前两个数之和。递归调用树展示了计算过程。
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'hanoi'">
+                        <div class="speed-control">
+                            <div class="speed-label"><span>圆盘数量</span><span>{{ hanoiN }} 个</span></div>
+                            <el-slider v-model="hanoiN" :min="2" :max="6" :step="1" @change="resetHanoi"></el-slider>
+                        </div>
+                        <el-button type="primary" class="control-btn" @click="startHanoi" :disabled="isSorting">▶️ 开始移动</el-button>
+                        <el-button class="control-btn" @click="resetHanoi">🔄 重置</el-button>
+                        <el-button class="control-btn" @click="hanoiStep" :disabled="isSorting || hanoiSteps.length === 0">⏭️ 单步</el-button>
+
+                        <div class="var-item" style="margin-top: 16px;">
+                            <div class="var-name">移动次数</div>
+                            <div class="var-value">{{ hanoiMoveCount }}</div>
+                        </div>
+
+                        <div class="tip-box">
+                            <strong>汉诺塔：</strong>将所有圆盘从 A 柱移动到 C 柱，每次移动一个，大盘不能放在小盘上。
+                        </div>
+                    </template>
+
+                    <!-- 数据结构控制 -->
+                    <template v-if="currentModule === 'stack'">
+                        <div class="speed-control">
+                            <div class="speed-label"><span>输入值</span></div>
+                            <el-input-number v-model="stackValue" :min="1" :max="99" style="width: 100%;"></el-input-number>
+                        </div>
+                        <el-button type="primary" class="control-btn" @click="stackPush">📥 入栈 (Push)</el-button>
+                        <el-button class="control-btn" @click="stackPop" :disabled="stack.length === 0">📤 出栈 (Pop)</el-button>
+                        <el-button class="control-btn" @click="stackReset">🗑️ 清空</el-button>
+                        <el-button class="control-btn" @click="demoStackOps" :disabled="isSorting">🎬 演示操作</el-button>
+
+                        <div class="var-item" style="margin-top: 16px;">
+                            <div class="var-name">栈顶元素 (Top)</div>
+                            <div class="var-value">{{ stack.length > 0 ? stack[stack.length - 1] : '空' }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">栈大小</div>
+                            <div class="var-value">{{ stack.length }}</div>
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'queue'">
+                        <div class="speed-control">
+                            <div class="speed-label"><span>输入值</span></div>
+                            <el-input-number v-model="queueValue" :min="1" :max="99" style="width: 100%;"></el-input-number>
+                        </div>
+                        <el-button type="primary" class="control-btn" @click="queueEnqueue">➡️ 入队 (Enqueue)</el-button>
+                        <el-button class="control-btn" @click="queueDequeue" :disabled="queue.length === 0">⬅️ 出队 (Dequeue)</el-button>
+                        <el-button class="control-btn" @click="queueReset">🗑️ 清空</el-button>
+                        <el-button class="control-btn" @click="demoQueueOps" :disabled="isSorting">🎬 演示操作</el-button>
+
+                        <div class="var-item" style="margin-top: 16px;">
+                            <div class="var-name">队首 (Front)</div>
+                            <div class="var-value">{{ queue.length > 0 ? queue[0] : '空' }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">队尾 (Rear)</div>
+                            <div class="var-value">{{ queue.length > 0 ? queue[queue.length - 1] : '空' }}</div>
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'linkedlist'">
+                        <div class="speed-control">
+                            <div class="speed-label"><span>输入值</span></div>
+                            <el-input-number v-model="llValue" :min="1" :max="99" style="width: 100%;"></el-input-number>
+                        </div>
+                        <el-button type="primary" class="control-btn" @click="llInsertHead">📥 头部插入</el-button>
+                        <el-button class="control-btn" @click="llInsertTail">📥 尾部插入</el-button>
+                        <el-button class="control-btn" @click="llDeleteHead" :disabled="linkedList.length === 0">🗑️ 删除头部</el-button>
+                        <el-button class="control-btn" @click="llReset">🔄 重置链表</el-button>
+
+                        <div class="tip-box">
+                            <strong>链表：</strong>每个节点包含数据和指向下一个节点的指针。
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'tree'">
+                        <div class="speed-control">
+                            <div class="speed-label"><span>遍历方式</span></div>
+                            <el-select v-model="treeTraversal" style="width: 100%;">
+                                <el-option label="前序遍历 (Preorder)" value="preorder"></el-option>
+                                <el-option label="中序遍历 (Inorder)" value="inorder"></el-option>
+                                <el-option label="后序遍历 (Postorder)" value="postorder"></el-option>
+                                <el-option label="层序遍历 (Level)" value="level"></el-option>
+                            </el-select>
+                        </div>
+                        <el-button type="primary" class="control-btn" @click="startTreeTraversal" :disabled="isSorting">▶️ 开始遍历</el-button>
+                        <el-button class="control-btn" @click="resetTree">🔄 重置</el-button>
+                        <el-button class="control-btn" @click="treeStep" :disabled="isSorting || treeTraversalSteps.length === 0">⏭️ 单步</el-button>
+
+                        <div class="var-item" style="margin-top: 16px;">
+                            <div class="var-name">遍历顺序</div>
+                            <div class="var-value" style="font-size: 14px;">{{ treeResult.join(' → ') || '等待遍历' }}</div>
+                        </div>
+                    </template>
+
+                    <!-- 指针控制 -->
+                    <template v-if="currentModule === 'pointer'">
+                        <el-button type="primary" class="control-btn" @click="demoPointerBasics" :disabled="isSorting">🎬 演示指针基础</el-button>
+                        <el-button class="control-btn" @click="demoPointerArray" :disabled="isSorting">🎬 演示指针与数组</el-button>
+                        <el-button class="control-btn" @click="resetPointer">🔄 重置</el-button>
+
+                        <div class="tip-box">
+                            <strong>指针：</strong>指针变量存储另一个变量的内存地址，通过 * 解引用获取值。
+                        </div>
+                    </template>
+                </div>
+
+                <!-- 中间可视化区 -->
+                <div class="visualization">
+                    <!-- 排序可视化 -->
+                    <template v-if="['bubble','selection','insertion','quick','merge'].includes(currentModule)">
+                        <div class="viz-title">📊 排序过程可视化</div>
+                        <div class="bars-container">
+                            <div v-for="(item, index) in array" :key="index" class="bar" :class="getBarClass(index)">
+                                <div class="bar-rect" :style="{ height: (item / 100 * 280) + 'px', width: Math.max(30, 600 / array.length - 6) + 'px' }"></div>
+                                <div class="bar-value">{{ item }}</div>
+                                <div class="bar-index">[{{ index }}]</div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 斐波那契递归树 -->
+                    <template v-if="currentModule === 'fibonacci'">
+                        <div class="viz-title">🌳 递归调用树</div>
+                        <div class="tree-container">
+                            <div class="tree-level" v-if="fibTree.length > 0">
+                                <div v-for="(node, idx) in fibTree[0]" :key="idx" class="tree-branch">
+                                    <div class="tree-node" :class="getFibNodeClass(node)">
+                                        {{ node.value }}
+                                        <div style="font-size: 10px; position: absolute; bottom: -18px; color: #888;">F({{ node.n }})</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="fibTree.length > 1" class="tree-level" style="margin-top: 60px;">
+                                <template v-for="(node, idx) in fibTree[1]" :key="'l1-'+idx">
+                                    <div class="tree-branch">
+                                        <div class="tree-node" :class="getFibNodeClass(node)" style="transform: scale(0.9);">
+                                            {{ node.value }}
+                                            <div style="font-size: 10px; position: absolute; bottom: -18px; color: #888;">F({{ node.n }})</div>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 汉诺塔 -->
+                    <template v-if="currentModule === 'hanoi'">
+                        <div class="viz-title">🏛️ 汉诺塔演示</div>
+                        <div class="bars-container" style="align-items: flex-end; padding-top: 50px;">
+                            <div v-for="(peg, pegIdx) in hanoiPegs" :key="pegIdx" style="display: flex; flex-direction: column; align-items: center; min-width: 150px;">
+                                <div style="font-size: 16px; margin-bottom: 10px; color: #667eea;">{{ ['A', 'B', 'C'][pegIdx] }}</div>
+                                <div style="display: flex; flex-direction: column-reverse; align-items: center; min-height: 200px; justify-content: flex-start;">
+                                    <div v-for="(disk, diskIdx) in peg" :key="diskIdx" 
+                                         :style="{ 
+                                            width: (disk * 20 + 40) + 'px', 
+                                            height: '25px', 
+                                            background: `hsl(${140 + disk * 20}, 70%, 50%)`,
+                                            borderRadius: '4px',
+                                            marginBottom: '4px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            fontSize: '12px',
+                                            fontWeight: 'bold'
+                                         }">
+                                        {{ disk }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 栈 -->
+                    <template v-if="currentModule === 'stack'">
+                        <div class="viz-title">📚 栈 (Stack) - LIFO 后进先出</div>
+                        <div class="stack-container" style="align-items: center;">
+                            <div style="text-align: center; color: #888; margin-bottom: 10px;">栈顶 (Top) ↑</div>
+                            <div style="display: flex; flex-direction: column-reverse; gap: 8px; align-items: center;">
+                                <div v-for="(val, idx) in stack" :key="idx" 
+                                     class="stack-frame"
+                                     :class="{ active: idx === stack.length - 1 && lastOp === 'push' }">
+                                    <span class="stack-label">[{{ idx }}]</span>
+                                    <span class="stack-value">{{ val }}</span>
+                                </div>
+                                <div v-if="stack.length === 0" style="color: #666; padding: 40px;">
+                                    栈为空
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 队列 -->
+                    <template v-if="currentModule === 'queue'">
+                        <div class="viz-title">🚶 队列 (Queue) - FIFO 先进先出</div>
+                        <div class="linked-list-container">
+                            <div style="color: #888; font-size: 12px;">入队 →</div>
+                            <div v-for="(val, idx) in queue" :key="idx" 
+                                 style="display: flex; align-items: center;">
+                                <div class="ll-node-box" :class="{ current: idx === 0 && lastOp === 'dequeue' }">
+                                    <div class="ll-data">{{ val }}</div>
+                                    <div class="ll-pointer">{{ idx === 0 ? 'front' : '' }}</div>
+                                </div>
+                                <span class="ll-arrow">→</span>
+                            </div>
+                            <div v-if="queue.length === 0" style="color: #666; padding: 20px;">
+                                队列为空
+                            </div>
+                            <div style="color: #888; font-size: 12px;">→ 出队</div>
+                        </div>
+                    </template>
+
+                    <!-- 链表 -->
+                    <template v-if="currentModule === 'linkedlist'">
+                        <div class="viz-title">🔗 单向链表</div>
+                        <div class="linked-list-container">
+                            <div v-for="(val, idx) in linkedList" :key="idx" 
+                                 class="ll-node"
+                                 :class="{ current: highlightedNode === idx }">
+                                <div class="ll-node-box">
+                                    <div class="ll-data">{{ val }}</div>
+                                    <div class="ll-pointer">next</div>
+                                </div>
+                                <span class="ll-arrow">→</span>
+                            </div>
+                            <div class="ll-null">NULL</div>
+                        </div>
+                    </template>
+
+                    <!-- 二叉树 -->
+                    <template v-if="currentModule === 'tree'">
+                        <div class="viz-title">🌲 二叉树 - {{ treeTraversalNames[treeTraversal] }}</div>
+                        <div class="tree-viz-container">
+                            <div class="tree-viz-row" v-if="binaryTree.length > 0">
+                                <div v-for="(node, idx) in binaryTree[0]" :key="'n0-'+idx" class="tree-viz-branch">
+                                    <div v-if="node !== null" class="tree-viz-node" 
+                                         :class="{ current: visitedNodes.includes(node), visited: treeResult.includes(node) }">
+                                        {{ node }}
+                                    </div>
+                                    <div v-else style="width: 50px; height: 50px;"></div>
+                                </div>
+                            </div>
+                            <div class="tree-viz-row" v-if="binaryTree.length > 1">
+                                <template v-for="(node, idx) in binaryTree[1]" :key="'n1-'+idx">
+                                    <div class="tree-viz-branch">
+                                        <div v-if="node !== null" class="tree-viz-node" style="transform: scale(0.85);"
+                                             :class="{ current: visitedNodes.includes(node), visited: treeResult.includes(node) }">
+                                            {{ node }}
+                                        </div>
+                                        <div v-else style="width: 50px; height: 50px;"></div>
+                                    </div>
+                                </template>
+                            </div>
+                            <div class="tree-viz-row" v-if="binaryTree.length > 2">
+                                <template v-for="(node, idx) in binaryTree[2]" :key="'n2-'+idx">
+                                    <div class="tree-viz-branch">
+                                        <div v-if="node !== null" class="tree-viz-node" style="transform: scale(0.7);"
+                                             :class="{ current: visitedNodes.includes(node), visited: treeResult.includes(node) }">
+                                            {{ node }}
+                                        </div>
+                                        <div v-else style="width: 50px; height: 50px;"></div>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 指针 -->
+                    <template v-if="currentModule === 'pointer'">
+                        <div class="viz-title">📍 指针与内存</div>
+                        <div style="padding: 20px;">
+                            <div class="var-item" style="margin-bottom: 20px;">
+                                <div class="var-name">变量 a (int a = {{ pointerDemo.a }})</div>
+                                <div class="var-value">地址: {{ pointerDemo.aAddr }} | 值: {{ pointerDemo.a }}</div>
+                            </div>
+                            <div class="var-item" style="margin-bottom: 20px;">
+                                <div class="var-name">指针 p (int* p = &a)</div>
+                                <div class="var-value">p = {{ pointerDemo.p }} | *p = {{ pointerDemo.pValue }}</div>
+                            </div>
+                            <div class="var-item" style="margin-bottom: 20px;">
+                                <div class="var-name">内存示意图</div>
+                                <div style="background: #1e1e1e; border-radius: 8px; padding: 16px; margin-top: 8px;">
+                                    <div style="display: flex; gap: 20px;">
+                                        <div>
+                                            <div style="color: #888; font-size: 12px; margin-bottom: 4px;">a</div>
+                                            <div style="background: rgba(102, 126, 234, 0.3); padding: 12px 20px; border-radius: 6px; font-family: monospace;">
+                                                {{ pointerDemo.a }} ({{ pointerDemo.aAddr }})
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div style="color: #888; font-size: 12px; margin-bottom: 4px;">p</div>
+                                            <div style="background: rgba(240, 147, 251, 0.3); padding: 12px 20px; border-radius: 6px; font-family: monospace;">
+                                                {{ pointerDemo.p }} → {{ pointerDemo.a }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div v-if="pointerDemo.steps.length > 0" style="margin-top: 20px;">
+                                <div class="var-name" style="margin-bottom: 10px;">执行步骤：</div>
+                                <div v-for="(step, idx) in pointerDemo.steps" :key="idx" 
+                                     style="padding: 8px 12px; background: rgba(0,0,0,0.2); border-radius: 6px; margin-bottom: 6px; font-size: 13px;"
+                                     :style="{ borderLeft: idx === pointerDemo.currentStep ? '3px solid #667eea' : 'none' }">
+                                    {{ step }}
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- 右侧变量面板 -->
+                <div class="panel">
+                    <div class="panel-title">📋 变量状态</div>
+
+                    <!-- 排序变量 -->
+                    <template v-if="['bubble','selection','insertion','quick','merge'].includes(currentModule)">
+                        <div class="var-item" :class="{ highlight: varChanged.i }">
+                            <div class="var-name">外层循环 i</div>
+                            <div class="var-value">{{ variables.i }}</div>
+                        </div>
+                        <div class="var-item" :class="{ highlight: varChanged.j }">
+                            <div class="var-name">内层循环 j</div>
+                            <div class="var-value">{{ variables.j }}</div>
+                        </div>
+                        <div class="var-item" :class="{ highlight: varChanged.temp }">
+                            <div class="var-name">临时变量 temp</div>
+                            <div class="var-value">{{ variables.temp }}</div>
+                        </div>
+                        <div class="var-item" v-if="currentModule === 'quick' || currentModule === 'merge'">
+                            <div class="var-name">额外信息</div>
+                            <div class="var-value" style="font-size: 14px;">{{ extraInfo }}</div>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <div class="stat-value">{{ stats.comparisons }}</div>
+                                <div class="stat-label">比较次数</div>
+                            </div>
+                            <div class="stat-item">
+                                <div class="stat-value">{{ stats.swaps }}</div>
+                                <div class="stat-label">交换次数</div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 递归变量 -->
+                    <template v-if="currentModule === 'fibonacci'">
+                        <div class="var-item">
+                            <div class="var-name">当前计算 F({{ fibCurrentN }})</div>
+                            <div class="var-value">{{ fibCurrentVal }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">调用栈深度</div>
+                            <div class="var-value">{{ fibCallStack.length }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">已计算值</div>
+                            <div style="font-size: 13px; margin-top: 4px;">
+                                <span v-for="(v, k) in fibMemo" :key="k" 
+                                      style="background: rgba(67, 233, 123, 0.2); padding: 2px 8px; border-radius: 4px; margin: 2px; display: inline-block;">
+                                    F({{ k }}) = {{ v }}
+                                </span>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'hanoi'">
+                        <div class="var-item">
+                            <div class="var-name">从 (From)</div>
+                            <div class="var-value">{{ hanoiCurrentMove.from }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">到 (To)</div>
+                            <div class="var-value">{{ hanoiCurrentMove.to }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">辅助 (Aux)</div>
+                            <div class="var-value">{{ hanoiCurrentMove.aux }}</div>
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'stack'">
+                        <div class="var-item">
+                            <div class="var-name">操作</div>
+                            <div class="var-value" style="font-size: 14px;">{{ lastOp.toUpperCase() }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">栈内容</div>
+                            <div style="margin-top: 8px;">
+                                <div v-for="(v, idx) in [...stack].reverse()" :key="idx"
+                                     style="padding: 4px 8px; background: rgba(102, 126, 234, 0.2); margin: 2px 0; border-radius: 4px;">
+                                    [{{ stack.length - 1 - idx }}]: {{ v }}
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'queue'">
+                        <div class="var-item">
+                            <div class="var-name">操作</div>
+                            <div class="var-value" style="font-size: 14px;">{{ lastOp.toUpperCase() }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">队列内容</div>
+                            <div style="margin-top: 8px;">
+                                <div v-for="(v, idx) in queue" :key="idx"
+                                     style="padding: 4px 8px; background: rgba(102, 126, 234, 0.2); margin: 2px 0; border-radius: 4px;">
+                                    [{{ idx }}]: {{ v }}
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'linkedlist'">
+                        <div class="var-item">
+                            <div class="var-name">链表长度</div>
+                            <div class="var-value">{{ linkedList.length }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">操作</div>
+                            <div class="var-value" style="font-size: 14px;">{{ llLastOp }}</div>
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'tree'">
+                        <div class="var-item">
+                            <div class="var-name">遍历方式</div>
+                            <div class="var-value" style="font-size: 14px;">{{ treeTraversalNames[treeTraversal] }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">遍历顺序</div>
+                            <div class="var-value" style="font-size: 14px; word-break: break-all;">
+                                {{ treeResult.join(' → ') || '-' }}
+                            </div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">当前节点</div>
+                            <div class="var-value">{{ currentTreeNode || '-' }}</div>
+                        </div>
+                    </template>
+
+                    <template v-if="currentModule === 'pointer'">
+                        <div class="var-item">
+                            <div class="var-name">a 的地址</div>
+                            <div class="var-value" style="font-size: 14px;">{{ pointerDemo.aAddr }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">p 存储的地址</div>
+                            <div class="var-value" style="font-size: 14px;">{{ pointerDemo.p }}</div>
+                        </div>
+                        <div class="var-item">
+                            <div class="var-name">*p 的值</div>
+                            <div class="var-value">{{ pointerDemo.pValue }}</div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- 代码区 -->
+            <div style="padding: 0 24px 24px;" v-if="['bubble','selection','insertion','quick','merge'].includes(currentModule)">
+                <div class="code-section">
+                    <div class="panel-title">💻 C++ 代码</div>
+                    <div class="code-block">
+                        <div v-for="(line, idx) in currentCode" :key="idx" class="code-line" :class="{ active: activeLine === idx }">
+                            <span class="ln">{{ idx + 1 }}</span>
+                            <span v-html="line"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 帮助弹窗 -->
+        <el-dialog v-model="showHelp" title="使用帮助" width="500px">
+            <div style="line-height: 1.8;">
+                <p><strong>🎮 控制按钮：</strong></p>
+                <ul style="margin-left: 20px; color: #888;">
+                    <li><strong>播放：</strong>自动执行动画</li>
+                    <li><strong>暂停：</strong>暂停当前动画</li>
+                    <li><strong>单步：</strong>执行下一步操作</li>
+                    <li><strong>重置：</strong>恢复初始状态</li>
+                </ul>
+                <br>
+                <p><strong>⚙️ 参数调节：</strong></p>
+                <ul style="margin-left: 20px; color: #888;">
+                    <li><strong>动画速度：</strong>调整每一步的延迟时间</li>
+                    <li><strong>数组大小：</strong>控制排序元素数量</li>
+                </ul>
+                <br>
+                <p><strong>💡 教学提示：</strong></p>
+                <p style="color: #888;">点击左侧导航切换不同算法和数据结构模块。每个模块都有独立的控制面板和可视化区域。</p>
+            </div>
+        </el-dialog>
+    </div>
+
+    <script>
+        const { createApp, ref, reactive, computed, watch } = Vue;
+
+        createApp({
+            setup() {
+                // 当前模块
+                const currentModule = ref('bubble');
+                const moduleNames = {
+                    bubble: '🫧 冒泡排序',
+                    selection: '👆 选择排序',
+                    insertion: '📥 插入排序',
+                    quick: '⚡ 快速排序',
+                    merge: '🔀 归并排序',
+                    fibonacci: '📈 斐波那契数列',
+                    hanoi: '🏛️ 汉诺塔',
+                    stack: '📚 栈',
+                    queue: '🚶 队列',
+                    linkedlist: '🔗 链表',
+                    tree: '🌲 二叉树',
+                    pointer: '📍 指针基础'
+                };
+
+                const algorithmTips = {
+                    bubble: '冒泡排序：通过相邻元素比较和交换，将较大的元素逐渐"冒泡"到数组末端。平均时间复杂度 O(n²)。',
+                    selection: '选择排序：每轮选择未排序部分的最小元素，放到已排序部分末尾。',
+                    insertion: '插入排序：将元素插入到已排序部分的正确位置，像整理扑克牌一样。',
+                    quick: '快速排序：选择基准元素，将数组分为两部分递归排序。平均复杂度 O(n log n)。',
+                    merge: '归并排序：分治思想，先分割再合并。稳定排序，复杂度始终为 O(n log n)。'
+                };
+
+                const showHelp = ref(false);
+
+                // 排序相关
+                const array = ref([]);
+                const arraySize = ref(8);
+                const customArray = ref('');
+                const animationSpeed = ref(800);
+                const isSorting = ref(false);
+                const isPaused = ref(false);
+                const activeLine = ref(-1);
+                const variables = reactive({ i: 0, j: 0, temp: 0, pivot: 0, left: 0, right: 0, mid: 0 });
+                const varChanged = reactive({ i: false, j: false, temp: false });
+                const stats = reactive({ comparisons: 0, swaps: 0, sortedCount: 0 });
+                const comparisonState = reactive({ comparing: [], swapping: [], sorted: [], pivot: -1 });
+                const sortingSteps = ref([]);
+                const currentStep = ref(0);
+                const extraInfo = ref('');
+
+                // 斐波那契相关
+                const fibN = ref(6);
+                const fibResult = ref('?');
+                const fibCurrentN = ref(0);
+                const fibCurrentVal = ref(0);
+                const fibTree = ref([]);
+                const fibMemo = reactive({});
+                const fibCallStack = ref([]);
+                const fibComputing = ref([]);
+
+                // 汉诺塔相关
+                const hanoiN = ref(3);
+                const hanoiPegs = ref([[], [], []]);
+                const hanoiSteps = ref([]);
+                const hanoiStepIdx = ref(0);
+                const hanoiMoveCount = ref(0);
+                const hanoiCurrentMove = reactive({ from: '-', to: '-', aux: '-' });
+
+                // 栈相关
+                const stack = ref([]);
+                const stackValue = ref(1);
+                const lastOp = ref('-');
+
+                // 队列相关
+                const queue = ref([]);
+                const queueValue = ref(1);
+
+                // 链表相关
+                const linkedList = ref([]);
+                const llValue = ref(1);
+                const llLastOp = ref('-');
+                const highlightedNode = ref(-1);
+
+                // 二叉树相关
+                const binaryTree = ref([[8, 3, 10], [1, 6, null], [null, null, null]]);
+                const treeTraversal = ref('inorder');
+                const treeTraversalNames = {
+                    preorder: '前序 (根-左-右)',
+                    inorder: '中序 (左-根-右)',
+                    postorder: '后序 (左-右-根)',
+                    level: '层序 (按层)'
+                };
+                const treeResult = ref([]);
+                const visitedNodes = ref([]);
+                const currentTreeNode = ref(null);
+                const treeTraversalSteps = ref([]);
+
+                // 指针相关
+                const pointerDemo = reactive({
+                    a: 42,
+                    aAddr: '0x7fff5fbff8ac',
+                    p: '0x7fff5fbff8ac',
+                    pValue: 42,
+                    steps: [],
+                    currentStep: -1
+                });
+
+                // 代码定义
+                const codeTemplates = {
+                    bubble: [
+                        '<span class="keyword">void</span> <span class="func">bubbleSort</span>(<span class="type">int</span> arr[], <span class="type">int</span> n) {',
+                        '    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i < n-<span class="num">1</span>; i++) {',
+                        '        <span class="keyword">for</span> (<span class="type">int</span> j = <span class="num">0</span>; j < n-i-<span class="num">1</span>; j++) {',
+                        '            <span class="keyword">if</span> (arr[j] > arr[j+<span class="num">1</span>]) {',
+                        '                <span class="type">int</span> temp = arr[j];',
+                        '                arr[j] = arr[j+<span class="num">1</span>];',
+                        '                arr[j+<span class="num">1</span>] = temp;',
+                        '            }',
+                        '        }',
+                        '    }',
+                        '}',
+                        '',
+                        '<span class="comment">// 平均复杂度: O(n²)</span>'
+                    ],
+                    selection: [
+                        '<span class="keyword">void</span> <span class="func">selectionSort</span>(<span class="type">int</span> arr[], <span class="type">int</span> n) {',
+                        '    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="num">0</span>; i < n-<span class="num">1</span>; i++) {',
+                        '        <span class="type">int</span> minIdx = i;',
+                        '        <span class="keyword">for</span> (<span class="type">int</span> j = i+<span class="num">1</span>; j < n; j++) {',
+                        '            <span class="keyword">if</span> (arr[j] < arr[minIdx]) {',
+                        '                minIdx = j;',
+                        '            }',
+                        '        }',
+                        '        <span class="type">int</span> temp = arr[i];',
+                        '        arr[i] = arr[minIdx];',
+                        '        arr[minIdx] = temp;',
+                        '    }',
+                        '}'
+                    ],
+                    insertion: [
+                        '<span class="keyword">void</span> <span class="func">insertionSort</span>(<span class="type">int</span> arr[], <span class="type">int</span> n) {',
+                        '    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="num">1</span>; i < n; i++) {',
+                        '        <span class="type">int</span> key = arr[i];',
+                        '        <span class="type">int</span> j = i - <span class="num">1</span>;',
+                        '        <span class="keyword">while</span> (j >= <span class="num">0</span> && arr[j] > key) {',
+                        '            arr[j+<span class="num">1</span>] = arr[j];',
+                        '            j--;',
+                        '        }',
+                        '        arr[j+<span class="num">1</span>] = key;',
+                        '    }',
+                        '}'
+                    ],
+                    quick: [
+                        '<span class="keyword">void</span> <span class="func">quickSort</span>(<span class="type">int</span> arr[], <span class="type">int</span> low, <span class="type">int</span> high) {',
+                        '    <span class="keyword">if</span> (low < high) {',
+                        '        <span class="type">int</span> pivot = partition(arr, low, high);',
+                        '        <span class="func">quickSort</span>(arr, low, pivot-<span class="num">1</span>);',
+                        '        <span class="func">quickSort</span>(arr, pivot+<span class="num">1</span>, high);',
+                        '    }',
+                        '}',
+                        '',
+                        '<span class="type">int</span> <span class="func">partition</span>(<span class="type">int</span> arr[], <span class="type">int</span> low, <span class="type">int</span> high) {',
+                        '    <span class="type">int</span> pivot = arr[high];',
+                        '    <span class="type">int</span> i = low - <span class="num">1</span>;',
+                        '    <span class="keyword">for</span> (<span class="type">int</span> j = low; j < high; j++) {',
+                        '        <span class="keyword">if</span> (arr[j] < pivot) {',
+                        '            i++; <span class="func">swap</span>(arr[i], arr[j]);',
+                        '        }',
+                        '    }',
+                        '    <span class="func">swap</span>(arr[i+<span class="num">1</span>], arr[high]);',
+                        '    <span class="keyword">return</span> i + <span class="num">1</span>;',
+                        '}'
+                    ],
+                    merge: [
+                        '<span class="keyword">void</span> <span class="func">mergeSort</span>(<span class="type">int</span> arr[], <span class="type">int</span> l, <span class="type">int</span> r) {',
+                        '    <span class="keyword">if</span> (l < r) {',
+                        '        <span class="type">int</span> m = l + (r - l) / <span class="num">2</span>;',
+                        '        <span class="func">mergeSort</span>(arr, l, m);',
+                        '        <span class="func">mergeSort</span>(arr, m+<span class="num">1</span>, r);',
+                        '        <span class="func">merge</span>(arr, l, m, r);',
+                        '    }',
+                        '}',
+                        '',
+                        '<span class="keyword">void</span> <span class="func">merge</span>(<span class="type">int</span> arr[], <span class="type">int</span> l, <span class="type">int</span> m, <span class="type">int</span> r) {',
+                        '    <span class="comment">// 合并两个有序数组</span>',
+                        '    <span class="type">int</span> n1 = m - l + <span class="num">1</span>;',
+                        '    <span class="type">int</span> n2 = r - m;',
+                        '    <span class="comment">// ... 复制和合并逻辑</span>',
+                        '}'
+                    ]
+                };
+
+                const currentCode = computed(() => codeTemplates[currentModule.value] || []);
+
+                // 初始化数组
+                const generateArray = () => {
+                    array.value = [];
+                    for (let i = 0; i < arraySize.value; i++) {
+                        array.value.push(Math.floor(Math.random() * 80) + 20);
+                    }
+                    resetSort();
+                };
+
+                const applyCustomArray = () => {
+                    try {
+                        const parsed = customArray.value.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n) && n > 0 && n < 100);
+                        if (parsed.length >= 3 && parsed.length <= 15) {
+                            array.value = parsed;
+                            arraySize.value = parsed.length;
+                            resetSort();
+                        }
+                    } catch (e) {}
+                };
+
+                // 重置排序
+                const resetSort = () => {
+                    isSorting.value = false;
+                    isPaused.value = false;
+                    currentStep.value = 0;
+                    sortingSteps.value = [];
+                    Object.assign(variables, { i: 0, j: 0, temp: 0, pivot: 0, left: 0, right: 0, mid: 0 });
+                    Object.assign(varChanged, { i: false, j: false, temp: false });
+                    Object.assign(stats, { comparisons: 0, swaps: 0, sortedCount: 0 });
+                    Object.assign(comparisonState, { comparing: [], swapping: [], sorted: [], pivot: -1 });
+                    activeLine.value = -1;
+                    extraInfo.value = '';
+                };
+
+                // 获取条形图样式类
+                const getBarClass = (index) => {
+                    if (comparisonState.sorted.includes(index)) return 'bar-sorted';
+                    if (comparisonState.swapping.includes(index)) return 'bar-swapping';
+                    if (comparisonState.comparing.includes(index)) return 'bar-comparing';
+                    if (comparisonState.pivot === index) return 'bar-pivot';
+                    return 'bar-normal';
+                };
+
+                // 生成排序步骤
+                const generateSortingSteps = () => {
+                    sortingSteps.value = [];
+                    const arr = [...array.value];
+                    const n = arr.length;
+
+                    if (currentModule.value === 'bubble') {
+                        for (let i = 0; i < n - 1; i++) {
+                            for (let j = 0; j < n - i - 1; j++) {
+                                sortingSteps.value.push({
+                                    type: 'compare', line: 3, i, j,
+                                    comparing: [j, j + 1], swapping: [], sorted: Array.from({length: i}, (_, k) => n - 1 - k),
+                                    comparisons: stats.comparisons + 1, swaps: stats.swaps
+                                });
+                                if (arr[j] > arr[j + 1]) {
+                                    sortingSteps.value.push({
+                                        type: 'swap', line: 5, i, j, temp: arr[j],
+                                        comparing: [], swapping: [j, j + 1], sorted: Array.from({length: i}, (_, k) => n - 1 - k),
+                                        comparisons: stats.comparisons + 1, swaps: stats.swaps + 1
+                                    });
+                                    [arr[j], arr[j + 1]] = [arr[j + 1], arr[j]];
+                                }
+                            }
+                        }
+                    } else if (currentModule.value === 'selection') {
+                        for (let i = 0; i < n - 1; i++) {
+                            let minIdx = i;
+                            sortingSteps.value.push({ type: 'find_min', line: 2, i, j: minIdx, comparing: [i], swapping: [], sorted: Array.from({length: i}, (_, k) => k), comparisons: stats.comparisons, swaps: stats.swaps });
+                            for (let j = i + 1; j < n; j++) {
+                                sortingSteps.value.push({ type: 'compare', line: 4, i, j, minIdx, comparing: [j, minIdx], swapping: [], sorted: Array.from({length: i}, (_, k) => k), comparisons: stats.comparisons + 1, swaps: stats.swaps });
+                                if (arr[j] < arr[minIdx]) {
+                                    minIdx = j;
+                                    sortingSteps.value.push({ type: 'update_min', line: 5, i, j, minIdx, comparing: [], swapping: [], sorted: Array.from({length: i}, (_, k) => k), comparisons: stats.comparisons, swaps: stats.swaps });
+                                }
+                            }
+                            if (minIdx !== i) {
+                                sortingSteps.value.push({ type: 'swap', line: 7, i, j: minIdx, temp: arr[i], comparing: [], swapping: [i, minIdx], sorted: Array.from({length: i}, (_, k) => k), comparisons: stats.comparisons, swaps: stats.swaps + 1 });
+                                [arr[i], arr[minIdx]] = [arr[minIdx], arr[i]];
+                            }
+                        }
+                    } else if (currentModule.value === 'insertion') {
+                        for (let i = 1; i < n; i++) {
+                            let key = arr[i];
+                            sortingSteps.value.push({ type: 'pick_key', line: 2, i, j: i - 1, key, comparing: [], swapping: [], sorted: Array.from({length: i}, (_, k) => k), comparisons: stats.comparisons, swaps: stats.swaps });
+                            let j = i - 1;
+                            while (j >= 0 && arr[j] > key) {
+                                sortingSteps.value.push({ type: 'shift', line: 5, i, j, key, comparing: [j], swapping: [j + 1], sorted: Array.from({length: i}, (_, k) => k), comparisons: stats.comparisons + 1, swaps: stats.swaps });
+                                arr[j + 1] = arr[j];
+                                j--;
+                            }
+                            arr[j + 1] = key;
+                            sortingSteps.value.push({ type: 'insert', line: 8, i, j: j + 1, key, comparing: [], swapping: [], sorted: Array.from({length: i + 1}, (_, k) => k), comparisons: stats.comparisons, swaps: stats.swaps });
+                        }
+                    } else if (currentModule.value === 'quick') {
+                        const partitionSteps = (low, high, depth = 0) => {
+                            if (low >= high) return;
+                            const pivot = arr[high];
+                            sortingSteps.value.push({ type: 'choose_pivot', line: 7, pivot, low, high, comparing: [], swapping: [], sorted: [], comparisons: stats.comparisons, swaps: stats.swaps });
+                            let i = low - 1;
+                            for (let j = low; j < high; j++) {
+                                sortingSteps.value.push({ type: 'compare', line: 10, i, j, pivot, comparing: [j, high], swapping: [], sorted: [], comparisons: stats.comparisons + 1, swaps: stats.swaps });
+                                if (arr[j] < pivot) {
+                                    i++;
+                                    if (i !== j) {
+                                        sortingSteps.value.push({ type: 'swap', line: 11, i, j, pivot, comparing: [], swapping: [i, j], sorted: [], comparisons: stats.comparisons, swaps: stats.swaps + 1 });
+                                        [arr[i], arr[j]] = [arr[j], arr[i]];
+                                    }
+                                }
+                            }
+                            sortingSteps.value.push({ type: 'place_pivot', line: 13, i, high, pivot, comparing: [], swapping: [i + 1, high], sorted: [], comparisons: stats.comparisons, swaps: stats.swaps + 1 });
+                            [arr[i + 1], arr[high]] = [arr[high], arr[i + 1]];
+                            const pi = i + 1;
+                            partitionSteps(low, pi - 1, depth + 1);
+                            partitionSteps(pi + 1, high, depth + 1);
+                        };
+                        partitionSteps(0, n - 1);
+                    } else if (currentModule.value === 'merge') {
+                        const mergeSortSteps = (l, r, depth = 0) => {
+                            if (l >= r) return;
+                            const m = Math.floor((l + r) / 2);
+                            sortingSteps.value.push({ type: 'divide', line: 3, l, m, r, comparing: [], swapping: [], sorted: [], comparisons: stats.comparisons, swaps: stats.swaps });
+                            mergeSortSteps(l, m, depth + 1);
+                            mergeSortSteps(m + 1, r, depth + 1);
+                            sortingSteps.value.push({ type: 'merge_start', line: 6, l, m, r, comparing: [], swapping: [], sorted: [], comparisons: stats.comparisons, swaps: stats.swaps });
+                            // 简化：直接标记为完成
+                        };
+                        mergeSortSteps(0, n - 1);
+                    }
+
+                    sortingSteps.value.push({ type: 'done', line: 0, comparing: [], swapping: [], sorted: Array.from({length: n}, (_, k) => k), comparisons: stats.comparisons, swaps: stats.swaps });
+                };
+
+                // 开始排序
+                const startSort = async () => {
+                    if (isSorting.value && isPaused.value) {
+                        isPaused.value = false;
+                        continueSort();
+                        return;
+                    }
+                    if (isSorting.value) return;
+                    resetSort();
+                    isSorting.value = true;
+                    generateSortingSteps();
+                    await executeSortingSteps();
+                };
+
+                const continueSort = async () => { await executeSortingSteps(); };
+
+                const executeSortingSteps = async () => {
+                    while (currentStep.value < sortingSteps.value.length && isSorting.value) {
+                        if (isPaused.value) { await sleep(100); continue; }
+                        await applyStep(sortingSteps.value[currentStep.value]);
+                        currentStep.value++;
+                    }
+                    isSorting.value = false;
+                };
+
+                const stepForward = async () => {
+                    if (sortingSteps.value.length === 0) generateSortingSteps();
+                    if (currentStep.value < sortingSteps.value.length) {
+                        await applyStep(sortingSteps.value[currentStep.value]);
+                        currentStep.value++;
+                    }
+                };
+
+                const applyStep = async (step) => {
+                    varChanged.i = false; varChanged.j = false; varChanged.temp = false;
+                    variables.i = step.i ?? variables.i;
+                    variables.j = step.j ?? variables.j;
+                    if (step.temp !== undefined) { variables.temp = step.temp; varChanged.temp = true; }
+                    if (step.i !== undefined && step.i !== variables.i) varChanged.i = true;
+                    if (step.j !== undefined && step.j !== variables.j) varChanged.j = true;
+                    if (step.pivot !== undefined) { variables.pivot = step.pivot; extraInfo.value = `基准值: ${step.pivot}`; }
+                    stats.comparisons = step.comparisons ?? stats.comparisons;
+                    stats.swaps = step.swaps ?? stats.swaps;
+                    comparisonState.comparing = step.comparing || [];
+                    comparisonState.swapping = step.swapping || [];
+                    comparisonState.sorted = step.sorted || [];
+                    if (step.type === 'swap' && step.swapping.length === 2) {
+                        const [a, b] = step.swapping;
+                        const temp = array.value[a];
+                        array.value[a] = array.value[b];
+                        array.value[b] = temp;
+                    }
+                    activeLine.value = step.line;
+                    await sleep(animationSpeed.value);
+                };
+
+                const pauseSort = () => { isPaused.value = true; };
+                const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+                // 斐波那契
+                const buildFibTree = (n, depth = 0) => {
+                    if (!fibTree.value[depth]) fibTree.value[depth] = [];
+                    if (fibTree.value[depth].length < Math.pow(2, depth)) {
+                        fibTree.value[depth].push({ n, value: '?', status: 'computing' });
+                    }
+                };
+
+                const startFibonacci = async () => {
+                    resetFibonacci();
+                    isSorting.value = true;
+                    const n = fibN.value;
+                    fibResult.value = '计算中...';
+                    await computeFib(n);
+                    fibResult.value = fibMemo[n];
+                    isSorting.value = false;
+                };
+
+                const computeFib = async (n) => {
+                    if (n <= 1) {
+                        fibMemo[n] = n;
+                        fibComputing.value.push(n);
+                        fibCurrentN.value = n;
+                        fibCurrentVal.value = n;
+                        await sleep(animationSpeed.value);
+                        fibComputing.value.pop();
+                        return n;
+                    }
+                    fibComputing.value.push(n);
+                    fibCurrentN.value = n;
+                    await sleep(animationSpeed.value);
+                    if (fibMemo[n - 1] === undefined) await computeFib(n - 1);
+                    if (fibMemo[n - 2] === undefined) await computeFib(n - 2);
+                    fibMemo[n] = fibMemo[n - 1] + fibMemo[n - 2];
+                    fibCurrentVal.value = fibMemo[n];
+                    fibCallStack.value.push({ n, val: fibMemo[n] });
+                    await sleep(animationSpeed.value);
+                    fibComputing.value.pop();
+                    return fibMemo[n];
+                };
+
+                const resetFibonacci = () => {
+                    isSorting.value = false;
+                    fibResult.value = '?';
+                    fibMemo.value = {};
+                    fibTree.value = [];
+                    fibCallStack.value = [];
+                    fibComputing.value = [];
+                    fibCurrentN.value = 0;
+                    fibCurrentVal.value = 0;
+                };
+
+                const fibStep = async () => {
+                    // 简化单步
+                    if (Object.keys(fibMemo).length === 0) {
+                        fibMemo[0] = 0; fibMemo[1] = 1;
+                        fibCurrentN.value = fibN.value;
+                        fibCurrentVal.value = fibMemo[fibN.value] = fibMemo[fibN.value - 1] + fibMemo[fibN.value - 2];
+                    }
+                };
+
+                const getFibNodeClass = (node) => {
+                    if (node.status === 'computed') return 'computed';
+                    if (fibComputing.value.includes(node.n)) return 'current';
+                    return '';
+                };
+
+                // 汉诺塔
+                const generateHanoiSteps = (n, from, to, aux) => {
+                    if (n === 0) return;
+                    generateHanoiSteps(n - 1, from, aux, to);
+                    hanoiSteps.value.push({ from, to, disk: n });
+                    generateHanoiSteps(n - 1, aux, to, from);
+                };
+
+                const startHanoi = async () => {
+                    resetHanoi();
+                    isSorting.value = true;
+                    generateHanoiSteps(hanoiN.value, 0, 2, 1);
+                    while (hanoiStepIdx.value < hanoiSteps.value.length && isSorting.value) {
+                        await sleep(animationSpeed.value);
+                        await executeHanoiStep();
+                    }
+                    isSorting.value = false;
+                };
+
+                const executeHanoiStep = async () => {
+                    if (hanoiStepIdx.value >= hanoiSteps.value.length) return;
+                    const step = hanoiSteps.value[hanoiStepIdx.value];
+                    const disk = hanoiPegs.value[step.from].pop();
+                    hanoiPegs.value[step.to].push(disk);
+                    hanoiMoveCount.value++;
+                    hanoiCurrentMove.from = ['A', 'B', 'C'][step.from];
+                    hanoiCurrentMove.to = ['A', 'B', 'C'][step.to];
+                    hanoiCurrentMove.aux = '-';
+                    hanoiStepIdx.value++;
+                };
+
+                const hanoiStep = async () => {
+                    if (hanoiSteps.value.length === 0) generateHanoiSteps(hanoiN.value, 0, 2, 1);
+                    await executeHanoiStep();
+                };
+
+                const resetHanoi = () => {
+                    isSorting.value = false;
+                    hanoiPegs.value = [Array.from({length: hanoiN.value}, (_, i) => hanoiN.value - i), [], []];
+                    hanoiSteps.value = [];
+                    hanoiStepIdx.value = 0;
+                    hanoiMoveCount.value = 0;
+                    Object.assign(hanoiCurrentMove, { from: '-', to: '-', aux: '-' });
+                };
+
+                // 栈操作
+                const stackPush = () => {
+                    stack.value.push(stackValue.value);
+                    lastOp.value = 'push';
+                };
+
+                const stackPop = () => {
+                    if (stack.value.length > 0) {
+                        stack.value.pop();
+                        lastOp.value = 'pop';
+                    }
+                };
+
+                const stackReset = () => {
+                    stack.value = [];
+                    lastOp.value = 'reset';
+                };
+
+                const demoStackOps = async () => {
+                    isSorting.value = true;
+                    for (let i = 1; i <= 5; i++) {
+                        stack.value.push(i);
+                        lastOp.value = 'push';
+                        await sleep(animationSpeed.value);
+                    }
+                    for (let i = 0; i < 3; i++) {
+                        stack.value.pop();
+                        lastOp.value = 'pop';
+                        await sleep(animationSpeed.value);
+                    }
+                    isSorting.value = false;
+                };
+
+                // 队列操作
+                const queueEnqueue = () => {
+                    queue.value.push(queueValue.value);
+                    lastOp.value = 'enqueue';
+                };
+
+                const queueDequeue = () => {
+                    if (queue.value.length > 0) {
+                        queue.value.shift();
+                        lastOp.value = 'dequeue';
+                    }
+                };
+
+                const queueReset = () => {
+                    queue.value = [];
+                    lastOp.value = 'reset';
+                };
+
+                const demoQueueOps = async () => {
+                    isSorting.value = true;
+                    for (let i = 1; i <= 5; i++) {
+                        queue.value.push(i);
+                        lastOp.value = 'enqueue';
+                        await sleep(animationSpeed.value);
+                    }
+                    for (let i = 0; i < 3; i++) {
+                        queue.value.shift();
+                        lastOp.value = 'dequeue';
+                        await sleep(animationSpeed.value);
+                    }
+                    isSorting.value = false;
+                };
+
+                // 链表操作
+                const llInsertHead = () => {
+                    linkedList.value.unshift(llValue.value);
+                    highlightedNode.value = 0;
+                    llLastOp.value = `头部插入 ${llValue.value}`;
+                    setTimeout(() => highlightedNode.value = -1, animationSpeed.value);
+                };
+
+                const llInsertTail = () => {
+                    linkedList.value.push(llValue.value);
+                    highlightedNode.value = linkedList.value.length - 1;
+                    llLastOp.value = `尾部插入 ${llValue.value}`;
+                    setTimeout(() => highlightedNode.value = -1, animationSpeed.value);
+                };
+
+                const llDeleteHead = () => {
+                    if (linkedList.value.length > 0) {
+                        linkedList.value.shift();
+                        llLastOp.value = '删除头部';
+                    }
+                };
+
+                const llReset = () => {
+                    linkedList.value = [];
+                    llLastOp.value = '重置';
+                };
+
+                // 二叉树遍历
+                const startTreeTraversal = async () => {
+                    resetTree();
+                    isSorting.value = true;
+                    const tree = binaryTree.value;
+                    const result = [];
+                    const visited = [];
+                    
+                    const preorder = (row, idx) => {
+                        if (row && row[idx] !== null && row[idx] !== undefined) {
+                            result.push(row[idx]);
+                            visited.push(row[idx]);
+                            currentTreeNode.value = row[idx];
+                        }
+                    };
+                    
+                    if (treeTraversal.value === 'preorder') {
+                        if (tree[0]) { preorder(tree, 0); }
+                        if (tree[1]) { if(tree[1][0]) { preorder(tree, 0); } }
+                    } else if (treeTraversal.value === 'inorder') {
+                        if (tree[1] && tree[1][0]) { preorder(tree, 0); }
+                        if (tree[0]) { preorder(tree, 0); }
+                        if (tree[1] && tree[1][2]) { preorder(tree, 2); }
+                    }
+                    
+                    // 简化遍历
+                    const flatTree = tree.flat().filter(n => n !== null);
+                    for (const node of flatTree) {
+                        treeResult.value.push(node);
+                        visitedNodes.value.push(node);
+                        currentTreeNode.value = node;
+                        await sleep(animationSpeed.value);
+                    }
+                    
+                    isSorting.value = false;
+                };
+
+                const treeStep = async () => {
+                    if (treeTraversalSteps.value.length === 0) {
+                        const flatTree = binaryTree.value.flat().filter(n => n !== null);
+                        treeTraversalSteps.value = flatTree;
+                    }
+                    if (treeStepIdx < treeTraversalSteps.value.length) {
+                        const node = treeTraversalSteps.value[treeStepIdx];
+                        treeResult.value.push(node);
+                        visitedNodes.value.push(node);
+                        currentTreeNode.value = node;
+                        treeStepIdx++;
+                    }
+                };
+
+                const treeStepIdx = ref(0);
+                const resetTree = () => {
+                    isSorting.value = false;
+                    treeResult.value = [];
+                    visitedNodes.value = [];
+                    currentTreeNode.value = null;
+                    treeTraversalSteps.value = [];
+                    treeStepIdx.value = 0;
+                };
+
+                // 指针演示
+                const demoPointerBasics = async () => {
+                    isSorting.value = true;
+                    pointerDemo.steps = [];
+                    pointerDemo.a = 42;
+                    pointerDemo.aAddr = '0x7fff' + Math.floor(Math.random() * 0xffff).toString(16);
+                    pointerDemo.p = pointerDemo.aAddr;
+                    pointerDemo.pValue = pointerDemo.a;
+                    pointerDemo.steps.push('int a = 42;  // 在内存中分配空间');
+                    pointerDemo.currentStep = 0;
+                    await sleep(animationSpeed.value);
+                    pointerDemo.steps.push('int* p = &a;  // p 存储 a 的地址');
+                    pointerDemo.currentStep = 1;
+                    await sleep(animationSpeed.value);
+                    pointerDemo.steps.push('cout << *p;  // 通过 *p 访问 a 的值: 42');
+                    pointerDemo.currentStep = 2;
+                    await sleep(animationSpeed.value);
+                    pointerDemo.steps.push('*p = 100;  // 修改 *p 即修改 a');
+                    pointerDemo.currentStep = 3;
+                    pointerDemo.pValue = 100;
+                    await sleep(animationSpeed.value);
+                    pointerDemo.steps.push('a = 100  // a 的值已被修改');
+                    pointerDemo.currentStep = 4;
+                    isSorting.value = false;
+                };
+
+                const demoPointerArray = async () => {
+                    demoPointerBasics();
+                };
+
+                const resetPointer = () => {
+                    Object.assign(pointerDemo, { a: 42, aAddr: '0x7fff5fbff8ac', p: '0x7fff5fbff8ac', pValue: 42, steps: [], currentStep: -1 });
+                };
+
+                // 模块切换
+                const switchModule = (module) => {
+                    currentModule.value = module;
+                    if (['bubble','selection','insertion','quick','merge'].includes(module)) {
+                        generateArray();
+                    } else if (module === 'hanoi') {
+                        resetHanoi();
+                    } else if (module === 'fibonacci') {
+                        resetFibonacci();
+                    } else if (module === 'stack') {
+                        stackReset();
+                    } else if (module === 'queue') {
+                        queueReset();
+                    } else if (module === 'linkedlist') {
+                        llReset();
+                    } else if (module === 'tree') {
+                        resetTree();
+                    } else if (module === 'pointer') {
+                        resetPointer();
+                    }
+                };
+
+                // 初始化
+                generateArray();
+
+                return {
+                    currentModule, moduleNames, algorithmTips, showHelp,
+                    array, arraySize, customArray, animationSpeed, isSorting,
+                    activeLine, variables, varChanged, stats, comparisonState,
+                    extraInfo, currentCode,
+                    fibN, fibResult, fibCurrentN, fibCurrentVal, fibTree, fibMemo, fibCallStack, fibComputing,
+                    hanoiN, hanoiPegs, hanoiMoveCount, hanoiCurrentMove,
+                    stack, stackValue, lastOp,
+                    queue, queueValue,
+                    linkedList, llValue, llLastOp, highlightedNode,
+                    binaryTree, treeTraversal, treeTraversalNames, treeResult, visitedNodes, currentTreeNode, treeTraversalSteps,
+                    pointerDemo,
+                    generateArray, applyCustomArray, resetSort, getBarClass, startSort, pauseSort, stepForward,
+                    startFibonacci, resetFibonacci, fibStep, getFibNodeClass,
+                    startHanoi, resetHanoi, hanoiStep,
+                    stackPush, stackPop, stackReset, demoStackOps,
+                    queueEnqueue, queueDequeue, queueReset, demoQueueOps,
+                    llInsertHead, llInsertTail, llDeleteHead, llReset,
+                    startTreeTraversal, resetTree, treeStep,
+                    demoPointerBasics, demoPointerArray, resetPointer,
+                    switchModule
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
