@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">https://github.com/maker-xiao-chuizi/cpp-algo-viz/blob/main/index.html
+    <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>C++ 算法可视化教学平台</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1559,12 +1559,27 @@
                                     j, 
                                     key, 
                                     comparing: [j], 
-                                    swapping: [j + 1],  // j+1位置会被覆盖
+                                    swapping: [], 
                                     sorted: Array.from({length: i}, (_, k) => k),
                                     comparisons: stats.comparisons + 1, 
                                     swaps: stats.swaps 
                                 });
+                                
                                 // 实际移动元素（向右移动一位）
+                                sortingSteps.value.push({ 
+                                    type: 'move', 
+                                    line: 5, 
+                                    i, 
+                                    j, 
+                                    from: j, 
+                                    to: j + 1, 
+                                    comparing: [j], 
+                                    swapping: [j + 1],  // j+1位置会被覆盖
+                                    sorted: Array.from({length: i}, (_, k) => k),
+                                    comparisons: stats.comparisons, 
+                                    swaps: stats.swaps 
+                                });
+                                
                                 arr[j + 1] = arr[j];
                                 j--;
                             }
@@ -1576,7 +1591,8 @@
                                 line: 8, 
                                 i, 
                                 j: j + 1, 
-                                key, 
+                                to: j + 1,
+                                value: key,
                                 comparing: [], 
                                 swapping: [j + 1], 
                                 sorted: Array.from({length: i + 1}, (_, k) => k),
@@ -1653,6 +1669,8 @@
                                 comparing: [], 
                                 swapping: [i + 1, high], 
                                 sorted: [],
+                                from: i + 1,
+                                to: high,
                                 comparisons: stats.comparisons, 
                                 swaps: stats.swaps + 1 
                             });
@@ -1727,12 +1745,27 @@
                     comparisonState.comparing = step.comparing || [];
                     comparisonState.swapping = step.swapping || [];
                     comparisonState.sorted = step.sorted || [];
+
+                    // 处理不同类型的步骤
                     if (step.type === 'swap' && step.swapping.length === 2) {
                         const [a, b] = step.swapping;
                         const temp = array.value[a];
                         array.value[a] = array.value[b];
                         array.value[b] = temp;
+                    } else if (step.type === 'move' && step.from !== undefined && step.to !== undefined) {
+                        // 插入排序的元素移动
+                        array.value[step.to] = array.value[step.from];
+                    } else if (step.type === 'insert' && step.to !== undefined && step.value !== undefined) {
+                        // 插入操作
+                        array.value[step.to] = step.value;
+                    } else if (step.type === 'place_pivot' && step.swapping.length === 2) {
+                        // 快速排序放置基准
+                        const [a, b] = step.swapping;
+                        const temp = array.value[a];
+                        array.value[a] = array.value[b];
+                        array.value[b] = temp;
                     }
+
                     activeLine.value = step.line;
                     await sleep(animationSpeed.value);
                 };
